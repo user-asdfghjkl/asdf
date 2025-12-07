@@ -1,0 +1,1093 @@
+//1.1
+#include <iostream>
+using namespace std;
+
+char board[3][3] = {
+    {'1', '2', '3'},
+    {'4', '5', '6'},
+    {'7', '8', '9'}
+};
+
+char currentPlayer = 'X';
+int moveCount = 0;
+
+void display_board() {
+    for (int i = 0; i < 3; i++) {
+        cout << " " << board[i][0] << " | " << board[i][1] << " | " << board[i][2];
+        if (i < 2) {
+            cout << "\n---|---|---\n";
+        }
+    }
+    cout << "\n";
+}
+
+bool checkWin() {
+    for (int i = 0; i < 3; i++) {
+        if (board[i][0] == currentPlayer && board[i][1] == currentPlayer && board[i][2] == currentPlayer)
+            return true;
+
+        if (board[0][i] == currentPlayer && board[1][i] == currentPlayer && board[2][i] == currentPlayer)
+            return true;
+    }
+
+
+    if (board[0][0] == currentPlayer && board[1][1] == currentPlayer && board[2][2] == currentPlayer)
+        return true;
+
+    if (board[0][2] == currentPlayer && board[1][1] == currentPlayer && board[2][0] == currentPlayer)
+        return true;
+
+    return false;
+}
+
+bool checkDraw() {
+    return moveCount == 9;
+}
+
+void switchPlayer() {
+    currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
+}
+
+int main() {
+    int choice;
+    bool gameOver = false;
+
+    while (!gameOver) {
+        display_board();
+
+        cout << "Player " << currentPlayer << ", enter a number (1-9): ";
+        cin >> choice;
+
+        if (choice < 1 || choice > 9) {
+            cout << "Invalid input!!! Please enter number between 1 and 9.\n";
+            continue;
+        }
+
+        int row = (choice - 1) / 3;
+        int col = (choice - 1) % 3;
+
+        if (board[row][col] == 'X' || board[row][col] == 'O') {
+            cout << "Cell already taken! Try again...\n";
+            continue;
+        }
+
+        board[row][col] = currentPlayer;
+        moveCount++;
+
+        if (checkWin()) {
+            display_board();
+            cout << "Player " << currentPlayer << " wins!\n";
+            gameOver = true;
+            break;
+        }
+
+        else if (checkDraw()) {
+            display_board();
+            cout << "It's a draw!\n";
+            gameOver = true;
+            break;
+        }
+
+        switchPlayer();
+    }
+    cout << "\nGame Over. Thanks for playing!\n";
+    return 0;
+}
+
+
+//1.2 with ai
+#include <iostream>
+using namespace std;
+
+char board[3][3] = {
+    {'1','2','3'},
+    {'4','5','6'},
+    {'7','8','9'}
+};
+
+char human = 'X';
+char ai = 'O';
+int moveCount = 0;
+
+void display_board() {
+    for (int i = 0; i < 3; i++) {
+        cout << " " << board[i][0] << " | " << board[i][1] << " | " << board[i][2];
+        if (i < 2) cout << "\n---|---|---\n";
+    }
+    cout << "\n";
+}
+
+bool checkWin(char player) {
+    for (int i = 0; i < 3; i++) {
+        if (board[i][0] == player && board[i][1] == player && board[i][2] == player) return true;
+        if (board[0][i] == player && board[1][i] == player && board[2][i] == player) return true;
+    }
+    if (board[0][0] == player && board[1][1] == player && board[2][2] == player) return true;
+    if (board[0][2] == player && board[1][1] == player && board[2][0] == player) return true;
+    return false;
+}
+
+bool checkDraw() {
+    return moveCount == 9;
+}
+
+// Simplified minimax WITH moveCount tracking
+int minimax(bool isMaximizing) {
+    if (checkWin(ai)) return +10;
+    if (checkWin(human)) return -10;
+    if (checkDraw()) return 0;
+
+    int bestScore = isMaximizing ? -1000 : 1000;
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (board[i][j] != 'X' && board[i][j] != 'O') {
+                char original = board[i][j];
+                board[i][j] = isMaximizing ? ai : human;
+                moveCount++;
+
+                int score = minimax(!isMaximizing);
+
+                board[i][j] = original;
+                moveCount--;
+
+                if (isMaximizing)
+                    bestScore = max(bestScore, score);
+                else
+                    bestScore = min(bestScore, score);
+            }
+        }
+    }
+
+    return bestScore;
+}
+
+void aiMove() {
+    int bestScore = -1000;
+    int bestRow = -1, bestCol = -1;
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (board[i][j] != 'X' && board[i][j] != 'O') {
+                char original = board[i][j];
+                board[i][j] = ai;
+                moveCount++;
+
+                int score = minimax(false);
+
+                board[i][j] = original;
+                moveCount--;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestRow = i;
+                    bestCol = j;
+                }
+            }
+        }
+    }
+
+    board[bestRow][bestCol] = ai;
+    moveCount++;
+
+    cout << "AI played at position: " << (bestRow * 3 + bestCol + 1) << "\n\n";
+}
+
+int main() {
+    int choice;
+    bool gameOver = false;
+
+    while (!gameOver) {
+        display_board();
+        cout << "Player " << human << ", enter a number (1-9): ";
+        cin >> choice;
+
+        if (choice < 1 || choice > 9) {
+            cout << "Invalid input. Please enter a number between 1 and 9.\n";
+            continue;
+        }
+
+        int row = (choice - 1) / 3;
+        int col = (choice - 1) % 3;
+
+        if (board[row][col] == 'X' || board[row][col] == 'O') {
+            cout << "Cell already taken. Try again...\n";
+            continue;
+        }
+
+        board[row][col] = human;
+        moveCount++;
+
+        if (checkWin(human)) {
+            display_board();
+            cout << "Player " << human << " wins!\n";
+            gameOver = true;
+            break;
+        } else if (checkDraw()) {
+            display_board();
+            cout << "It's a draw!\n";
+            gameOver = true;
+            break;
+        }
+
+        aiMove();
+
+        if (checkWin(ai)) {
+            display_board();
+            cout << "AI (" << ai << ") wins!\n";
+            gameOver = true;
+            break;
+        } else if (checkDraw()) {
+            display_board();
+            cout << "It's a draw!\n";
+            gameOver = true;
+            break;
+        }
+    }
+
+    cout << "\nGame Over. Thanks for playing!\n";
+    return 0;
+}
+============================================================================================
+//2 uninformed st 
+/*
+   (A)
+   / \
+  1   4
+ /     \
+(B)---2--(C)
+ |        |
+ 5        3
+ |        |
+(D)---1--(E)<-- Goal
+*/
+//Basic Code
+
+/* 
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <algorithm>
+using namespace std;
+
+// ----- BFS -----
+void BFS(vector<vector<int>>& adj, int start, int goal) {
+    queue<int> q;
+    vector<int> parent(adj.size(), -1), vis(adj.size(), 0);
+    q.push(start); vis[start] = 1;
+
+    while(!q.empty()) {
+        int u = q.front(); q.pop();
+        if(u == goal) break;
+        for(int v : adj[u]) if(!vis[v]) {
+            vis[v] = 1; parent[v] = u; q.push(v);
+        }
+    }
+
+    cout << "BFS Path: ";
+    vector<char> path;
+    for(int v = goal; v != -1; v = parent[v]) {
+        path.push_back('A' + v);
+        if(v == start) break;
+    }
+    reverse(path.begin(), path.end());
+    for(char node : path) cout << node << " ";
+    cout << "\n";
+}
+
+// ----- DFS -----
+void DFS(vector<vector<int>>& adj, int start, int goal) {
+    stack<int> st;
+    vector<int> parent(adj.size(), -1), vis(adj.size(), 0);
+    st.push(start); vis[start] = 1;
+
+    while(!st.empty()) {
+        int u = st.top(); st.pop();
+        if(u == goal) break;
+        for(int v : adj[u]) if(!vis[v]) {
+            vis[v] = 1; parent[v] = u; st.push(v);
+        }
+    }
+
+    cout << "DFS Path: ";
+    vector<char> path;
+    for(int v = goal; v != -1; v = parent[v]) {
+        path.push_back('A' + v);
+        if(v == start) break;
+    }
+    reverse(path.begin(), path.end());
+    for(char node : path) cout << node << " ";
+    cout << "\n";
+}
+
+int main() {
+    // Unweighted graph (for BFS, DFS)
+    vector<vector<int>> adj = {
+        {1,2}, {0,2,3}, {0,1,4}, {1,4}, {2,3}
+    };
+
+    int start = 0, goal = 4; // A -> E
+    BFS(adj, start, goal);
+    DFS(adj, start, goal);
+}
+*/
+//8 puzzle game
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+// Print the puzzle state
+void printPuzzle(vector<int>& state) {
+    for(int i = 0; i < 9; i++) {
+        if(state[i] == 0) cout << "  ";
+        else cout << state[i] << " ";
+        if((i + 1) % 3 == 0) cout << "\n";
+    }
+    cout << "-------\n";
+}
+
+// Get possible moves from current state
+vector<vector<int>> getMoves(vector<int> state) {
+    vector<vector<int>> moves;
+    int pos = find(state.begin(), state.end(), 0) - state.begin();
+    int row = pos / 3, col = pos % 3;
+    
+    // Up, Down, Left, Right moves
+    int dx[] = {-1, 1, 0, 0};
+    int dy[] = {0, 0, -1, 1};
+    
+    for(int i = 0; i < 4; i++) {
+        int newRow = row + dx[i];
+        int newCol = col + dy[i];
+        
+        if(newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+            int newPos = newRow * 3 + newCol;
+            swap(state[pos], state[newPos]);
+            moves.push_back(state);
+            swap(state[pos], state[newPos]); // swap back
+        }
+    }
+    return moves;
+}
+
+// Convert state to string for comparison
+string stateToString(vector<int>& state) {
+    string s = "";
+    for(int x : state) s += to_string(x);
+    return s;
+}
+
+// BFS to solve puzzle
+bool solveBFS(vector<int> start, vector<int> goal) {
+    queue<pair<vector<int>, int>> q;
+    set<string> visited;
+    
+    q.push({start, 0});
+    visited.insert(stateToString(start));
+    
+    while(!q.empty()) {
+        auto curr = q.front();
+        q.pop();
+        
+        vector<int> state = curr.first;
+        int steps = curr.second;
+        
+        if(state == goal) {
+            cout << "BFS: Solved in " << steps << " steps!\n";
+            cout << "BFS explored " << visited.size() << " states\n\n";
+            return true;
+        }
+        
+        if(steps > 12) continue; // limit depth
+        
+        vector<vector<int>> nextMoves = getMoves(state);
+        for(auto move : nextMoves) {
+            string moveStr = stateToString(move);
+            if(visited.find(moveStr) == visited.end()) {
+                visited.insert(moveStr);
+                q.push({move, steps + 1});
+            }
+        }
+    }
+    
+    cout << "BFS: No solution found!\n\n";
+    return false;
+}
+
+// DFS to solve puzzle
+bool solveDFS(vector<int> start, vector<int> goal) {
+    stack<pair<vector<int>, int>> st;
+    set<string> visited;
+    
+    st.push({start, 0});
+    visited.insert(stateToString(start));
+    
+    while(!st.empty()) {
+        auto curr = st.top();
+        st.pop();
+        
+        vector<int> state = curr.first;
+        int steps = curr.second;
+        
+        if(state == goal) {
+            cout << "DFS: Solved in " << steps << " steps!\n";
+            cout << "DFS explored " << visited.size() << " states\n\n";
+            return true;
+        }
+        
+        if(steps > 12) continue; // limit depth
+        
+        vector<vector<int>> nextMoves = getMoves(state);
+        for(auto move : nextMoves) {
+            string moveStr = stateToString(move);
+            if(visited.find(moveStr) == visited.end()) {
+                visited.insert(moveStr);
+                st.push({move, steps + 1});
+            }
+        }
+    }
+    
+    cout << "DFS: No solution found!\n\n";
+    return false;
+}
+
+int main() {
+    // Initial puzzle state (0 represents empty space)
+    vector<int> start = {1, 2, 3, 4, 0, 6, 7, 5, 8};
+    
+    // Goal state
+    vector<int> goal = {1, 2, 3, 4, 5, 6, 7, 8, 0};
+    
+    cout << "8-Puzzle Solver - BFS vs DFS Comparison\n";
+    cout << "======================================\n";
+    
+    cout << "Starting puzzle:\n";
+    printPuzzle(start);
+    
+    cout << "Goal puzzle:\n";
+    printPuzzle(goal);
+    
+    cout << "\nSolving with BFS:\n";
+    cout << "-----------------\n";
+    solveBFS(start, goal);
+    
+    cout << "Solving with DFS:\n";
+    cout << "-----------------\n";
+    solveDFS(start, goal);
+    
+    cout << "Comparison:\n";
+    cout << "- BFS finds shortest path (optimal solution)\n";
+    cout << "- DFS may find longer path but uses less memory\n";
+    cout << "- Both use similar logic to your graph code!\n";
+    
+    return 0;
+}
+=============================================================================================
+//3.1 a*
+/*
+       (A, h=7)
+       /     \
+   1 /         \ 4
+     /           \
+(B, h=6)---2---(C, h=2)
+   |               |
+ 5 |               | 3
+   |               |
+(D, h=1)---1---(E, h=0) <-- Goal
+
+*/
+
+/*
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+struct Node {
+    int v;
+    double g; // cost so far
+    double f; // g + h
+    bool operator>(const Node& o) const { return f > o.f; }
+};
+
+void Astar(vector<vector<pair<int,int>>>& adj, vector<int>& h, int start, int goal) {
+    int n = adj.size();
+    vector<int> parent(n, -1);
+    vector<double> g(n, 1e9);
+
+    priority_queue<Node, vector<Node>, greater<Node>> pq;
+    g[start] = 0;
+    pq.push(Node{start, 0.0, static_cast<double>(h[start])});
+
+    while(!pq.empty()) {
+        Node cur = pq.top(); pq.pop();
+        if(cur.v == goal) break;
+
+        for(int i = 0; i < adj[cur.v].size(); i++) {
+            int v = adj[cur.v][i].first;
+            int w = adj[cur.v][i].second;
+            if(g[v] > g[cur.v] + w) {
+                g[v] = g[cur.v] + w;
+                parent[v] = cur.v;
+                pq.push(Node{v, g[v], g[v] + static_cast<double>(h[v])});
+            }
+        }
+    }
+
+    cout << "A* Path: ";
+    vector<char> path;
+    for(int v = goal; v != -1; v = parent[v]) {
+        path.push_back('A' + v);
+        if(v == start) break;
+    }
+    reverse(path.begin(), path.end());
+    for(char node : path) cout << node << " ";
+    cout << "Cost=" << g[goal] << "\n";
+}
+
+int main() {
+    vector<vector<pair<int,int>>> adjw = {
+        {{1,1},{2,4}},       // A
+        {{0,1},{2,2},{3,5}}, // B
+        {{0,4},{1,2},{4,3}}, // C
+        {{1,5},{4,1}},       // D
+        {{2,3},{3,1}}        // E
+    };
+
+    vector<int> h = {7,6,2,1,0};
+
+    int start = 0, goal = 4; // A -> E
+    Astar(adjw, h, start, goal);
+}
+*/
+//8 puzzle game
+
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+struct Node {
+    vector<int> state;
+    int g, h, f;
+    vector<string> path;
+    bool operator>(const Node& other) const { return f > other.f; }
+};
+
+string stateToString(vector<int>& state) {
+    string s = "";
+    for (int x : state) s += to_string(x);
+    return s;
+}
+
+int manhattan(vector<int>& state, vector<int>& goal) {
+    int dist = 0;
+    for (int i = 0; i < 9; i++) {
+        if (state[i] == 0) continue;
+        int x1 = i / 3, y1 = i % 3;
+        int pos = find(goal.begin(), goal.end(), state[i]) - goal.begin();
+        int x2 = pos / 3, y2 = pos % 3;
+        dist += abs(x1 - x2) + abs(y1 - y2);
+    }
+    return dist;
+}
+
+vector<vector<int>> getMoves(vector<int>& state) {
+    vector<vector<int>> moves;
+    int pos = find(state.begin(), state.end(), 0) - state.begin();
+    int row = pos / 3, col = pos % 3;
+    int dx[] = {-1,1,0,0}, dy[] = {0,0,-1,1};
+
+    for (int i = 0; i < 4; i++) {
+        int newRow = row + dx[i], newCol = col + dy[i];
+        if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 3) {
+            int newPos = newRow*3 + newCol;
+            swap(state[pos], state[newPos]);
+            moves.push_back(state);
+            swap(state[pos], state[newPos]);
+        }
+    }
+    return moves;
+}
+
+bool solveAstar(vector<int> start, vector<int> goal) {
+    priority_queue<Node, vector<Node>, greater<Node>> pq;
+    set<string> visited;
+    pq.push({start,0,manhattan(start,goal),manhattan(start,goal),{}});
+    visited.insert(stateToString(start));
+
+    string directions[4] = {"Up","Down","Left","Right"};
+    int dx[] = {-1,1,0,0}, dy[] = {0,0,-1,1};
+
+    while(!pq.empty()) {
+        Node cur = pq.top(); pq.pop();
+        if(cur.state == goal) {
+            cout << "Solved in " << cur.g << " moves.\nPath:\n";
+            for(auto s: cur.path) cout << s << "\n";
+            return true;
+        }
+
+        int pos = find(cur.state.begin(), cur.state.end(), 0) - cur.state.begin();
+        int row = pos/3, col = pos%3;
+
+        for(int i=0;i<4;i++){
+            int newRow = row + dx[i], newCol = col + dy[i];
+            if(newRow<0||newRow>=3||newCol<0||newCol>=3) continue;
+
+            vector<int> next = cur.state;
+            swap(next[row*3+col], next[newRow*3+newCol]);
+            string s = stateToString(next);
+            if(visited.find(s)==visited.end()){
+                visited.insert(s);
+                Node nextNode;
+                nextNode.state = next;
+                nextNode.g = cur.g + 1;
+                nextNode.h = manhattan(next, goal);
+                nextNode.f = nextNode.g + nextNode.h;
+                nextNode.path = cur.path;
+                nextNode.path.push_back(directions[i]);
+                pq.push(nextNode);
+            }
+        }
+    }
+    cout << "No solution found.\n";
+    return false;
+}
+
+void printPuzzle(vector<int>& state){
+    for(int i=0;i<9;i++){
+        if(state[i]==0) cout<<"  ";
+        else cout<<state[i]<<" ";
+        if((i+1)%3==0) cout<<"\n";
+    }
+    cout<<"-------\n";
+}
+
+int main() {
+    vector<int> start = {1,2,3,4,0,6,7,5,8};
+    //vector<int> start = {1,2,3,0,4,6,7,5,8};
+    //vector<int> start={8,3,1,6,4,7,0,5,2}; //hard puzzle
+
+    vector<int> goal  = {1,2,3,4,5,6,7,8,0};
+
+    cout<<"Start Puzzle:\n"; printPuzzle(start);
+    cout<<"Goal Puzzle:\n"; printPuzzle(goal);
+
+    solveAstar(start, goal);
+
+    return 0;
+}
+
+
+
+//3.2 ao*
+/*
+       (A, h=7)
+       /     \
+      OR       OR
+     /           \
+   (B, h=6)      (C, h=2)
+    |   \            |
+   AND    OR          OR
+   |       \          |
+(D, h=1)   (C, h=2)  (E, h=0)
+    |                   |
+    OR                  Goal
+    |                     
+   (E, h=0)            
+
+*/
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+// Node structure
+struct Node {
+    string name;
+    double h;                // heuristic
+    bool solved = false;     // true if solved
+    vector< vector< pair<int, double> > > successors; // indices instead of pointers
+};
+
+// AO* function using indices
+void AOStar(int index, vector<Node>& nodes) {
+    Node& node = nodes[index];
+    if(node.solved) return;
+
+    double minCost = 1e9;
+    vector<int> bestOption;
+
+    // Check all OR options
+    for(int i = 0; i < node.successors.size(); i++) {
+        vector<pair<int,double>> option = node.successors[i];
+        double cost = 0;
+
+        for(int j = 0; j < option.size(); j++) {
+            int childIndex = option[j].first;
+            double edgeCost = option[j].second;
+            cost += edgeCost + nodes[childIndex].h; // edge + child heuristic
+        }
+
+        if(cost < minCost) {
+            minCost = cost;
+            bestOption.clear();
+            for(int j = 0; j < option.size(); j++) {
+                bestOption.push_back(option[j].first);
+            }
+        }
+    }
+
+    node.h = minCost;      // update heuristic
+    node.solved = true;
+
+    // Print node and its best option
+    cout << node.name << " -> ";
+    for(int i = 0; i < bestOption.size(); i++) {
+        cout << nodes[bestOption[i]].name << " ";
+    }
+    cout << "(Cost=" << node.h << ")\n";
+
+    // Recursively solve children
+    for(int i = 0; i < bestOption.size(); i++) AOStar(bestOption[i], nodes);
+}
+
+int main() {
+    vector<Node> nodes(5);
+    nodes[0] = {"A",7};
+    nodes[1] = {"B",6};
+    nodes[2] = {"C",2};
+    nodes[3] = {"D",1};
+    nodes[4] = {"E",0};
+
+    // Define successors using indices
+    // Format: successors[OR option][AND combination] = {childIndex, edgeCost}
+    nodes[0].successors = { {{1,1}}, {{2,4}} };       // A OR B/C
+    nodes[1].successors = { {{3,5}}, {{2,2}} };       // B AND D OR C
+    nodes[2].successors = { {{4,3}} };                // C OR E
+    nodes[3].successors = { {{4,1}} };                // D OR E
+    nodes[4].successors = {};                         // Goal
+
+    // Run AO* starting from A (index 0)
+    AOStar(0, nodes);
+
+    return 0;
+}
+
+
+
+===============================================================================================
+//4. graph colorinng csp 
+#include <iostream>
+#include <vector>
+using namespace std;
+
+class GraphColoring {
+    int n, m;
+    vector<vector<int>> adj;
+    vector<int> color;
+
+public:
+    GraphColoring(int vertices, int colors) {
+        n = vertices;
+        m = colors;
+        adj.resize(n, vector<int>(n, 0));
+        color.resize(n, 0);
+    }
+
+    void addEdge(int u, int v) {
+        adj[u][v] = adj[v][u] = 1;
+    }
+
+    bool isSafe(int v, int c) {
+        for (int i = 0; i < n; i++)
+            if (adj[v][i] && color[i] == c)
+                return false;
+        return true;
+    }
+
+    bool solveColoring(int v) {
+        if (v == n) return true;
+
+        for (int c = 1; c <= m; c++) {
+            if (isSafe(v, c)) {
+                color[v] = c;
+                if (solveColoring(v + 1)) return true;
+                color[v] = 0;
+            }
+        }
+        return false;
+    }
+
+    void printSolution() {
+        cout << "Color assignment:\n";
+        for (int i = 0; i < n; i++)
+            cout << "Vertex " << i << " -> Color " << color[i] << endl;
+    }
+};
+
+int main() {
+    GraphColoring g(4, 3);
+    g.addEdge(0, 1);
+    g.addEdge(0, 2);
+    g.addEdge(0, 3);
+    g.addEdge(1, 3);
+
+    if (g.solveColoring(0))
+        g.printSolution();
+    else
+        cout << "No solution found.\n";
+
+    return 0;
+}
+
+
+==================================================================================================
+LAB 5  Predicate Logic Implementation (Cricket Team with Runs & Wickets):-
+% -----------------------------------------------------
+% Program: Predicate Logic Implementation - Cricket Team (Extended)
+% -----------------------------------------------------
+
+% --- Facts: player(Name, Role) ---
+player(rohit, batsman).
+player(virat, batsman).
+player(gill, batsman).
+player(suryakumar, batsman).
+player(hardik, allrounder).
+player(jadeja, allrounder).
+player(bumrah, bowler).
+player(shami, bowler).
+player(dhoni, wicket_keeper).
+
+% --- Facts: team_member(Name, Team) ---
+team_member(rohit, india).
+team_member(virat, india).
+team_member(gill, india).
+team_member(suryakumar, india).
+team_member(hardik, india).
+team_member(jadeja, india).
+team_member(bumrah, india).
+team_member(shami, india).
+team_member(dhoni, india).
+
+% --- Facts: captain & vice-captain ---
+captain(rohit, india).
+vice_captain(hardik, india).
+
+% --- Performance Facts ---
+runs(rohit, 7200).
+runs(virat, 13000).
+runs(gill, 1800).
+runs(suryakumar, 1200).
+runs(hardik, 2500).
+runs(jadeja, 2500).
+runs(dhoni, 10500).
+wickets(bumrah, 250).
+wickets(shami, 210).
+wickets(jadeja, 190).
+wickets(hardik, 90).
+
+% --- Rules for Role Type ---
+batsman(X) :- player(X, batsman).
+bowler(X) :- player(X, bowler).
+allrounder(X) :- player(X, allrounder).
+keeper(X) :- player(X, wicket_keeper).
+
+% --- Teammates if both are in same team ---
+teammates(X, Y) :-
+    team_member(X, T),
+    team_member(Y, T),
+    X \= Y.
+
+% --- Seniority chain ---
+senior(dhoni, rohit).
+senior(rohit, virat).
+senior(virat, gill).
+
+% --- Experienced player ---
+experienced(X) :-
+    captain(X, _);
+    vice_captain(X, _).
+
+% --- Main bowler ---
+main_bowler(X) :-
+    bowler(X),
+    team_member(X, india).
+
+% --- Rules for Runs and Wickets Queries ---
+
+% Who scored more than given runs
+high_scorer(X, MinRuns) :-
+    runs(X, R),
+    R > MinRuns.
+
+% Who took more than given wickets
+top_bowler(X, MinWkts) :-
+    wickets(X, W),
+    W > MinWkts.
+
+% Find the top scorer (max runs)
+top_scorer(X) :-
+    runs(X, R),
+    \+ (runs(_, R2), R2 > R).
+
+% Find the top wicket taker
+best_bowler(X) :-
+    wickets(X, W),
+    \+ (wickets(_, W2), W2 > W).
+% --- End of Program ---
+Example Queries and Output
+?- batsman(virat).
+true.
+
+?- teammates(rohit, virat).
+true.
+
+?- experienced(hardik).
+true.
+
+?- runs(virat, R).
+R = 13000.
+
+?- wickets(bumrah, W).
+W = 250.
+
+?- high_scorer(X, 5000).
+X = rohit ;
+X = virat ;
+X = dhoni.
+
+?- top_bowler(X, 200).
+X = bumrah ;
+X = shami.
+
+?- top_scorer(X).
+X = virat.
+
+?- best_bowler(X).
+X = bumrah.
+
+
+===========================================================================
+// 6 prolog for expert system
+% -----------------------------------------------------
+% Program: Expert System - Simple Disease Diagnosis
+% Author : Nilesh Sabale
+% -----------------------------------------------------
+
+% --- Knowledge Base: Diseases and their Symptoms ---
+% Each disease is defined in terms of the symptoms that must be present.
+
+disease(cold) :-
+    symptom(sneezing),
+    symptom(runny_nose),
+    symptom(sore_throat),
+    symptom(mild_cough).
+
+disease(flu) :-
+    symptom(fever),
+    symptom(headache),
+    symptom(body_ache),
+    symptom(cough),
+    symptom(chills).
+
+disease(malaria) :-
+    symptom(fever),
+    symptom(chills),
+    symptom(sweating),
+    symptom(headache),
+    symptom(vomiting).
+
+disease(typhoid) :-
+    symptom(fever),
+    symptom(stomach_pain),
+    symptom(loss_of_appetite),
+    symptom(weakness),
+    symptom(headache).
+
+disease(covid) :-
+    symptom(fever),
+    symptom(cough),
+    symptom(loss_of_taste),
+    symptom(breathing_problem),
+    symptom(tiredness).
+
+disease(cough) :-
+    symptom(throat_pain),
+    symptom(chest_pain),
+    symptom(dry_cough).
+
+disease(dengue) :-
+    symptom(fever),
+    symptom(headache),
+    symptom(rashes),
+    symptom(joint_pain),
+    symptom(bleeding_nose).
+
+disease(asthma) :-
+    symptom(shortness_of_breath),
+    symptom(chest_tightness),
+    symptom(cough),
+    symptom(wheezing).
+
+% --- Suggest remedies (extra feature for marks) ---
+remedy(cold, 'Take rest, drink warm water, and use steam inhalation.').
+remedy(flu, 'Drink fluids, take paracetamol, and rest well.').
+remedy(malaria, 'Consult a doctor and take anti-malarial medicine.').
+remedy(typhoid, 'Drink boiled water and eat light food.').
+remedy(covid, 'Isolate yourself, drink fluids, and consult a doctor.').
+remedy(cough, 'Use cough syrup and avoid cold drinks.').
+remedy(dengue, 'Take paracetamol, avoid aspirin, and drink plenty of fluids.').
+remedy(asthma, 'Use inhaler and avoid dust or smoke.').
+
+% --- Start Predicate (like main() in C) ---
+start :-
+    write('-------------------------------------------------'), nl,
+    write('        EXPERT SYSTEM: DISEASE DIAGNOSIS          '), nl,
+    write('-------------------------------------------------'), nl,
+    write('Please answer the following questions with yes. or no.'), nl, nl,
+    diagnose.
+
+% --- Diagnosis Logic ---
+diagnose :-
+    disease(D),
+    write('You may be suffering from: '), write(D), nl,
+    remedy(D, R),
+    write('Suggested Remedy: '), write(R), nl,
+    nl,
+    fail.  % find all possible diseases
+
+diagnose :-
+    write('Diagnosis completed. Please consult a doctor for confirmation.'), nl.
+
+% --- Ask user for symptoms ---
+symptom(S) :-
+    write('Do you have '), write(S), write('? '),
+    read(Reply),
+    Reply = yes.
+
+% --- Extra Helper Rules ---
+% To explain logic and make it longer for marks
+
+% If the user has fever, it may be serious
+check_fever :-
+    symptom(fever),
+    write('You have fever. Please monitor your temperature regularly.'), nl.
+
+% If the user has breathing problems, show warning
+check_breathing :-
+    symptom(breathing_problem),
+    write('You have breathing issues. Seek medical attention if it worsens.'), nl.
+
+% End of Program
+% -----------------------------------------------------
+==========================================================================================

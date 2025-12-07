@@ -1,0 +1,248 @@
+LAB 5 – Predicate Logic Implementation (Cricket Team with Runs & Wickets):-
+% -----------------------------------------------------
+% Program: Predicate Logic Implementation - Cricket Team (Extended)
+% -----------------------------------------------------
+
+% --- Facts: player(Name, Role) ---
+player(rohit, batsman).
+player(virat, batsman).
+player(gill, batsman).
+player(suryakumar, batsman).
+player(hardik, allrounder).
+player(jadeja, allrounder).
+player(bumrah, bowler).
+player(shami, bowler).
+player(dhoni, wicket_keeper).
+
+% --- Facts: team_member(Name, Team) ---
+team_member(rohit, india).
+team_member(virat, india).
+team_member(gill, india).
+team_member(suryakumar, india).
+team_member(hardik, india).
+team_member(jadeja, india).
+team_member(bumrah, india).
+team_member(shami, india).
+team_member(dhoni, india).
+
+% --- Facts: captain & vice-captain ---
+captain(rohit, india).
+vice_captain(hardik, india).
+
+% --- Performance Facts ---
+runs(rohit, 7200).
+runs(virat, 13000).
+runs(gill, 1800).
+runs(suryakumar, 1200).
+runs(hardik, 2500).
+runs(jadeja, 2500).
+runs(dhoni, 10500).
+wickets(bumrah, 250).
+wickets(shami, 210).
+wickets(jadeja, 190).
+wickets(hardik, 90).
+
+% --- Rules for Role Type ---
+batsman(X) :- player(X, batsman).
+bowler(X) :- player(X, bowler).
+allrounder(X) :- player(X, allrounder).
+keeper(X) :- player(X, wicket_keeper).
+
+% --- Teammates if both are in same team ---
+teammates(X, Y) :-
+    team_member(X, T),
+    team_member(Y, T),
+    X \= Y.
+
+% --- Seniority chain ---
+senior(dhoni, rohit).
+senior(rohit, virat).
+senior(virat, gill).
+
+% --- Experienced player ---
+experienced(X) :-
+    captain(X, _);
+    vice_captain(X, _).
+
+% --- Main bowler ---
+main_bowler(X) :-
+    bowler(X),
+    team_member(X, india).
+
+% --- Rules for Runs and Wickets Queries ---
+
+% Who scored more than given runs
+high_scorer(X, MinRuns) :-
+    runs(X, R),
+    R > MinRuns.
+
+% Who took more than given wickets
+top_bowler(X, MinWkts) :-
+    wickets(X, W),
+    W > MinWkts.
+
+% Find the top scorer (max runs)
+top_scorer(X) :-
+    runs(X, R),
+    \+ (runs(_, R2), R2 > R).
+
+% Find the top wicket taker
+best_bowler(X) :-
+    wickets(X, W),
+    \+ (wickets(_, W2), W2 > W).
+% --- End of Program ---
+Example Queries and Output
+?- batsman(virat).
+true.
+
+?- teammates(rohit, virat).
+true.
+
+?- experienced(hardik).
+true.
+
+?- runs(virat, R).
+R = 13000.
+
+?- wickets(bumrah, W).
+W = 250.
+
+?- high_scorer(X, 5000).
+X = rohit ;
+X = virat ;
+X = dhoni.
+
+?- top_bowler(X, 200).
+X = bumrah ;
+X = shami.
+
+?- top_scorer(X).
+X = virat.
+
+?- best_bowler(X).
+X = bumrah.
+
+========================================================================================================================================
+
+
+🤖 LAB 6 – Expert System Implementation (Disease Diagnosis Example)
+________________________________________
+🔹 Aim
+To develop a simple expert system in PROLOG that diagnoses common diseases based on symptoms provided by the user.
+
+% -----------------------------------------------------
+% Program: Expert System - Simple Disease Diagnosis
+% Author : Nilesh Sabale
+% -----------------------------------------------------
+
+% --- Knowledge Base: Diseases and their Symptoms ---
+% Each disease is defined in terms of the symptoms that must be present.
+
+disease(cold) :-
+    symptom(sneezing),
+    symptom(runny_nose),
+    symptom(sore_throat),
+    symptom(mild_cough).
+
+disease(flu) :-
+    symptom(fever),
+    symptom(headache),
+    symptom(body_ache),
+    symptom(cough),
+    symptom(chills).
+
+disease(malaria) :-
+    symptom(fever),
+    symptom(chills),
+    symptom(sweating),
+    symptom(headache),
+    symptom(vomiting).
+
+disease(typhoid) :-
+    symptom(fever),
+    symptom(stomach_pain),
+    symptom(loss_of_appetite),
+    symptom(weakness),
+    symptom(headache).
+
+disease(covid) :-
+    symptom(fever),
+    symptom(cough),
+    symptom(loss_of_taste),
+    symptom(breathing_problem),
+    symptom(tiredness).
+
+disease(cough) :-
+    symptom(throat_pain),
+    symptom(chest_pain),
+    symptom(dry_cough).
+
+disease(dengue) :-
+    symptom(fever),
+    symptom(headache),
+    symptom(rashes),
+    symptom(joint_pain),
+    symptom(bleeding_nose).
+
+disease(asthma) :-
+    symptom(shortness_of_breath),
+    symptom(chest_tightness),
+    symptom(cough),
+    symptom(wheezing).
+
+% --- Suggest remedies (extra feature for marks) ---
+remedy(cold, 'Take rest, drink warm water, and use steam inhalation.').
+remedy(flu, 'Drink fluids, take paracetamol, and rest well.').
+remedy(malaria, 'Consult a doctor and take anti-malarial medicine.').
+remedy(typhoid, 'Drink boiled water and eat light food.').
+remedy(covid, 'Isolate yourself, drink fluids, and consult a doctor.').
+remedy(cough, 'Use cough syrup and avoid cold drinks.').
+remedy(dengue, 'Take paracetamol, avoid aspirin, and drink plenty of fluids.').
+remedy(asthma, 'Use inhaler and avoid dust or smoke.').
+
+
+% --- Start Predicate (like main() in C) ---
+start :-
+    write('-------------------------------------------------'), nl,
+    write('        EXPERT SYSTEM: DISEASE DIAGNOSIS          '), nl,
+    write('-------------------------------------------------'), nl,
+    write('Please answer the following questions with yes. or no.'), nl, nl,
+    diagnose.
+
+% --- Diagnosis Logic ---
+diagnose :-
+    disease(D),
+    write('You may be suffering from: '), write(D), nl,
+    remedy(D, R),
+    write('Suggested Remedy: '), write(R), nl,
+    nl,
+    fail.  % find all possible diseases
+
+diagnose :-
+    write('Diagnosis completed. Please consult a doctor for confirmation.'), nl.
+
+% --- Ask user for symptoms ---
+symptom(S) :-
+    write('Do you have '), write(S), write('? '),
+    read(Reply),
+    Reply = yes.
+
+% --- Extra Helper Rules ---
+% To explain logic and make it longer for marks
+
+% If the user has fever, it may be serious
+check_fever :-
+    symptom(fever),
+    write('You have fever. Please monitor your temperature regularly.'), nl.
+
+% If the user has breathing problems, show warning
+check_breathing :-
+    symptom(breathing_problem),
+    write('You have breathing issues. Seek medical attention if it worsens.'), nl.
+
+% End of Program
+% -----------------------------------------------------
+
+
+
+

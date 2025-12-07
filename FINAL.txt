@@ -1,0 +1,421 @@
+#include <iostream>
+using namespace std;
+char board[9] = {'1','2','3','4','5','6','7','8','9'};
+char human = 'X';
+char ai = 'O';
+
+void display() {
+    cout << "\n";
+    cout << " " << board[0] << " | " << board[1] << " | " << board[2] << "\n";
+    cout << "---+---+---\n";
+    cout << " " << board[3] << " | " << board[4] << " | " << board[5] << "\n";
+    cout << "---+---+---\n";
+    cout << " " << board[6] << " | " << board[7] << " | " << board[8] << "\n\n";
+}
+
+// Simple winner checker (no auto, no arrays)
+bool checkWinner(char p) {
+    // rows
+    if (board[0]==p && board[1]==p && board[2]==p) return true;
+    if (board[3]==p && board[4]==p && board[5]==p) return true;
+    if (board[6]==p && board[7]==p && board[8]==p) return true;
+
+    // columns
+    if (board[0]==p && board[3]==p && board[6]==p) return true;
+    if (board[1]==p && board[4]==p && board[7]==p) return true;
+    if (board[2]==p && board[5]==p && board[8]==p) return true;
+
+    // diagonals
+    if (board[0]==p && board[4]==p && board[8]==p) return true;
+    if (board[2]==p && board[4]==p && board[6]==p) return true;
+    return false;
+}
+
+bool checkDraw() {
+    for (int i = 0; i < 9; i++)
+        if (board[i] != 'X' && board[i] != 'O')
+            return false;
+    return true;
+}
+
+int minimax(bool isMax) {
+    if (checkWinner(ai)) return 1;
+    if (checkWinner(human)) return -1;
+    if (checkDraw()) return 0;
+
+    if (isMax) {
+        int best = -1000;
+        for (int i = 0; i < 9; i++) {
+            if (board[i] != 'X' && board[i] != 'O') {
+                char save = board[i];
+                board[i] = ai;
+                int score = minimax(false);         //false => AI
+                board[i] = save;
+                if (score > best) best = score;  //>
+            }
+        }
+        return best;
+    } 
+    else {
+        int best = 1000;
+        for (int i = 0; i < 9; i++) {
+            if (board[i] != 'X' && board[i] != 'O') {
+                char save = board[i];
+                board[i] = human;
+                int score = minimax(true);          // TRUE => HUMAN
+                board[i] = save;
+                if (score < best) best = score; //<
+            }
+        }
+        return best;
+    }
+}
+void aiMove() {
+    int bestScore = -1000;
+    int bestMove = -1;
+    for (int i = 0; i < 9; i++) {
+        if (board[i] != 'X' && board[i] != 'O') {
+            char save = board[i];
+            board[i] = ai;
+            int score = minimax(false);               // FALSE => AIMOVE
+            board[i] = save;
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = i;
+            }
+        }
+    }
+    board[bestMove] = ai;
+    cout << "AI played at position: " << bestMove + 1 << "\n";
+}
+int main() {
+    int pos;
+
+    while (true) {
+        display();
+        cout << "Enter position (1-9): ";
+        cin >> pos;
+        pos--;
+        if (pos < 0 || pos > 8 || board[pos] == 'X' || board[pos] == 'O') {
+            cout << "Invalid move! Try again.\n";
+            continue;
+        }
+
+        board[pos] = human;
+
+        if (checkWinner(human)) {
+            display();
+            cout << "You win!\n";
+            break;
+        }
+        if (checkDraw()) {
+            display();
+            cout << "Draw!\n";
+            break;
+        }
+
+        aiMove();
+
+        if (checkWinner(ai)) {
+            display();
+            cout << "AI wins!\n";
+            break;
+        }
+        if (checkDraw()) {
+            display();
+            cout << "Draw!\n";
+            break;
+        }
+    }
+    return 0;
+}
+//============================================================================
+// bfs & dfs for NUMBER OF ISLANDS
+// #include <bits/stdc++.h>
+#include<iostream>
+#include<queue>
+#include<vector>
+using namespace std;
+// ------------ DFS FUNCTION ------------
+void dfs(int x, int y, vector<vector<char>>& g) {
+    int n = g.size(), m = g[0].size();
+    if(x < 0 || y < 0 || x >= n || y >= m || g[x][y] == '0') return;
+
+    g[x][y] = '0'; // mark visited
+
+    dfs(x+1, y, g);
+    dfs(x-1, y, g);
+    dfs(x, y+1, g);
+    dfs(x, y-1, g);
+}
+
+// ------------ BFS FUNCTION ------------
+void bfs(int i, int j, vector<vector<char>>& g) {
+    int n = g.size(), m = g[0].size();
+    queue<pair<int,int>> q;
+    q.push({i,j});
+    g[i][j] = '0';
+
+    int dx[4]={1,-1,0,0}, dy[4]={0,0,1,-1};
+
+    while(!q.empty()){
+        auto [x,y] = q.front(); q.pop();
+        for(int k=0;k<4;k++){
+            int nx = x + dx[k], ny = y + dy[k];
+            if(nx>=0 && ny>=0 && nx<n && ny<m && g[nx][ny]=='1'){
+                g[nx][ny]='0';
+                q.push({nx,ny});
+            }
+        }
+    }
+}
+
+// ------------ COUNT ISLANDS USING DFS ------------
+int countIslandsDFS(vector<vector<char>> g) {
+    int n=g.size(), m=g[0].size(), c=0;
+    for(int i=0;i<n;i++)
+        for(int j=0;j<m;j++)
+            if(g[i][j]=='1'){
+                c++;
+                dfs(i,j,g);
+            }
+    return c;
+}
+
+// ------------ COUNT ISLANDS USING BFS ------------
+int countIslandsBFS(vector<vector<char>> g) {
+    int n=g.size(), m=g[0].size(), c=0;
+    for(int i=0;i<n;i++)
+        for(int j=0;j<m;j++)
+            if(g[i][j]=='1'){
+                c++;
+                bfs(i,j,g);
+            }
+    return c;
+}
+
+// ------------ MAIN FUNCTION ------------
+int main() {
+    vector<vector<char>> grid = {
+        {'1','1','0','0','0'},
+        {'1','1','0','0','1'},
+        {'0','0','1','0','1'},
+        {'0','0','0','1','1'}
+    };
+
+    cout << "Number of Islands (DFS): " << countIslandsDFS(grid) << endl;
+    cout << "Number of Islands (BFS): " << countIslandsBFS(grid) << endl;
+}
+//===================================================================================
+// A* ALGORITHM IMPLEMENTATION
+
+
+// ====================================================================================
+//graph coloring using backtracking => CSP
+#include <iostream>
+using namespace std;
+
+int adj[10][10];
+int color[10];
+int n, m;
+
+bool safe(int v, int c) {
+    for (int i = 1; i <= n; i++)
+        if (adj[v][i] == 1 && color[i] == c)
+            return false;
+    return true;
+}
+
+bool solve(int v) {
+    if (v > n) return true;
+
+    for (int c = 1; c <= m; c++) {
+        if (safe(v, c)) {
+            color[v] = c;
+            if (solve(v + 1)) return true;
+            color[v] = 0;  // backtracking
+        }
+    }
+    return false;
+}
+
+int main() {
+    n = 4;  
+    m = 3;  // red, green, blue
+
+    // Square edges
+    adj[1][2] = adj[2][1] = 1;
+    adj[2][3] = adj[3][2] = 1;
+    adj[3][4] = adj[4][3] = 1;
+    adj[4][1] = adj[1][4] = 1;
+
+    if (solve(1)) {
+        cout << "Coloring:\n";
+        for (int i = 1; i <= n; i++) {
+            if (color[i] == 1) cout << i << " -> Red\n";
+            if (color[i] == 2) cout << i << " -> Green\n";
+            if (color[i] == 3) cout << i << " -> Blue\n";
+        }
+    } else {
+        cout << "No solution\n";
+    }
+}
+// ==================================================================================
+% Facts
+student(nilesh).
+student(virat).
+student(rohit).
+age(nilesh, 21).
+age(rohit, 20).
+age(virat, 22).
+course(math).
+course(physics).
+course(english).
+enrolled(nilesh, math).
+enrolled(nilesh, physics).
+enrolled(virat, english).
+enrolled(rohti, math).
+marks(nilesh, 85).
+marks(rohit, 40).
+marks(virat, 75).
+
+% Rules
+studies(S, C) :- enrolled(S, C).
+classmates(S1, S2) :- enrolled(S1, C), enrolled(S2, C), S1 \= S2.
+multi_course_student(S) :- enrolled(S, C1), enrolled(S, C2), C1 \= C2.
+takes_physics(S):- enrolled(S,physics).
+is_student(S) :- student(S).
+older_than(S1,S2):- age(S1,A1), age(S2,A2),
+    	A1>A2.
+younger_than(S1, S2) :-
+    age(S1, A1),
+    age(S2, A2),
+    A1 < A2.
+
+passed(S) :-
+    marks(S, M),
+    M >= 50.
+
+%Queries 
+%classmates(nilesh,X)
+%studies(nilesh, X)
+%studies(viray,X)
+%multi_course_student(X)
+%student(X)
+%course(X)
+%enrolled(X, english)
+%older_than(nilesh,virat)
+%is_student(nilesh).
+%classmates(nilesh, rohit)
+
+% -----------------------------------------------------
+% Program: Expert System - Simple Disease Diagnosis
+% -----------------------------------------------------
+% --- Knowledge Base: Diseases and their Symptoms ---
+% Each disease is defined in terms of the symptoms that must be present.
+
+disease(cold) :-
+    symptom(sneezing),
+    symptom(runny_nose),
+    symptom(sore_throat),
+    symptom(mild_cough).
+
+disease(flu) :-
+    symptom(fever),
+    symptom(headache),
+    symptom(body_ache),
+    symptom(cough),
+    symptom(chills).
+
+disease(malaria) :-
+    symptom(fever),
+    symptom(chills),
+    symptom(sweating),
+    symptom(headache),
+    symptom(vomiting).
+
+disease(typhoid) :-
+    symptom(fever),
+    symptom(stomach_pain),
+    symptom(loss_of_appetite),
+    symptom(weakness),
+    symptom(headache).
+
+disease(covid) :-
+    symptom(fever),
+    symptom(cough),
+    symptom(loss_of_taste),
+    symptom(breathing_problem),
+    symptom(tiredness).
+
+disease(cough) :-
+    symptom(throat_pain),
+    symptom(chest_pain),
+    symptom(dry_cough).
+
+disease(dengue) :-
+    symptom(fever),
+    symptom(headache),
+    symptom(rashes),
+    symptom(joint_pain),
+    symptom(bleeding_nose).
+
+disease(asthma) :-
+    symptom(shortness_of_breath),
+    symptom(chest_tightness),
+    symptom(cough),
+    symptom(wheezing).
+
+% --- Suggest remedies (extra feature for marks) ---
+remedy(cold, 'Take rest, drink warm water, and use steam inhalation.').
+remedy(flu, 'Drink fluids, take paracetamol, and rest well.').
+remedy(malaria, 'Consult a doctor and take anti-malarial medicine.').
+remedy(typhoid, 'Drink boiled water and eat light food.').
+remedy(covid, 'Isolate yourself, drink fluids, and consult a doctor.').
+remedy(cough, 'Use cough syrup and avoid cold drinks.').
+remedy(dengue, 'Take paracetamol, avoid aspirin, and drink plenty of fluids.').
+remedy(asthma, 'Use inhaler and avoid dust or smoke.').
+
+
+% --- Start Predicate (like main() in C) ---
+start :-
+    write('-------------------------------------------------'), nl,
+    write('        EXPERT SYSTEM: DISEASE DIAGNOSIS          '), nl,
+    write('-------------------------------------------------'), nl,
+    write('Please answer the following questions with yes. or no.'), nl, nl,
+    diagnose.
+
+% --- Diagnosis Logic ---
+diagnose :-
+    disease(D),
+    write('You may be suffering from: '), write(D), nl,
+    remedy(D, R),
+    write('Suggested Remedy: '), write(R), nl,
+    nl,
+    fail.  % find all possible diseases
+
+diagnose :-
+    write('Diagnosis completed. Please consult a doctor for confirmation.'), nl.
+
+% --- Ask user for symptoms ---
+symptom(S) :-
+    write('Do you have '), write(S), write('? '),
+    read(Reply),
+    Reply = yes.
+
+% --- Extra Helper Rules ---
+% To explain logic and make it longer for marks
+
+% If the user has fever, it may be serious
+check_fever :-
+    symptom(fever),
+    write('You have fever. Please monitor your temperature regularly.'), nl.
+
+% If the user has breathing problems, show warning
+check_breathing :-
+    symptom(breathing_problem),
+    write('You have breathing issues. Seek medical attention if it worsens.'), nl.
+
+% End of Program
+% -----------------------------------------------------
